@@ -1,27 +1,36 @@
 import axios from 'axios';
 
+if (!import.meta.env.VITE_API_URL) {
+    console.warn('[api.js] VITE_API_URL is not set. Falling back to http://localhost:5000');
+}
+
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000'
 });
 
-export const processImage = async (imageFile, tuningParams = {}) => {
+/**
+ * @param {File} imageFile
+ * @param {object} tuningParams   - { sharpness, noise, color, contrast }
+ * @param {string} outputFormat   - 'png' | 'jpeg' | 'webp'
+ * @param {number} outputQuality  - 0–100 (used for jpeg / webp)
+ */
+export const processImage = async (imageFile, tuningParams = {}, outputFormat = 'png', outputQuality = 90) => {
     const formData = new FormData();
     formData.append('image', imageFile);
+    formData.append('format', outputFormat);
+    formData.append('quality', outputQuality);
 
-    // Add tuning params if they exist (sharpness, noise, color, contrast)
     Object.keys(tuningParams).forEach(key => {
         formData.append(key, tuningParams[key]);
     });
 
     try {
         const response = await api.post('/process-image', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     } catch (error) {
-        console.error("Error processing image", error);
+        console.error('Error processing image', error);
         throw error;
     }
 };

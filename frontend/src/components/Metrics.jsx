@@ -1,15 +1,14 @@
 import React from 'react';
-import { Activity, Contrast, Layers } from 'lucide-react';
+import { Activity, Contrast, Layers, Radio, Signal } from 'lucide-react';
 
 export default function Metrics({ metrics }) {
 
-    const calculateImprovement = (before, after) => {
+    const pct = (before, after) => {
         if (!before) return 0;
         return (((after - before) / before) * 100).toFixed(1);
     };
 
-    const sharpnessImpr = calculateImprovement(metrics.sharpness_before, metrics.sharpness_after);
-    const contrastImpr = calculateImprovement(metrics.contrast_before, metrics.contrast_after);
+    const snrImpr = pct(metrics.snr_before, metrics.snr_after);
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 ease-out">
@@ -18,41 +17,66 @@ export default function Metrics({ metrics }) {
                 Image Metrics
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {/* Sharpness */}
                 <MetricCard
-                    title="Sharpness (Laplacian Variance)"
+                    title="Sharpness"
+                    subtitle="Laplacian Variance"
                     icon={<Layers className="w-5 h-5 text-blue-500" />}
                     before={metrics.sharpness_before.toFixed(1)}
                     after={metrics.sharpness_after.toFixed(1)}
-                    improvement={sharpnessImpr}
+                    improvement={pct(metrics.sharpness_before, metrics.sharpness_after)}
                     color="blue"
                 />
 
+                {/* Contrast */}
                 <MetricCard
-                    title="Contrast (Std Deviation)"
+                    title="Contrast"
+                    subtitle="Std Deviation"
                     icon={<Contrast className="w-5 h-5 text-purple-500" />}
                     before={metrics.contrast_before.toFixed(1)}
                     after={metrics.contrast_after.toFixed(1)}
-                    improvement={contrastImpr}
+                    improvement={pct(metrics.contrast_before, metrics.contrast_after)}
                     color="purple"
+                />
+
+                {/* SNR */}
+                <MetricCard
+                    title="SNR"
+                    subtitle="Signal-to-Noise Ratio"
+                    icon={<Signal className="w-5 h-5 text-emerald-500" />}
+                    before={`${metrics.snr_before} dB`}
+                    after={`${metrics.snr_after} dB`}
+                    improvement={snrImpr}
+                    color="emerald"
+                />
+
+                {/* PSNR */}
+                <SingleValueCard
+                    title="PSNR"
+                    subtitle="Peak Signal-to-Noise Ratio"
+                    icon={<Radio className="w-5 h-5 text-amber-500" />}
+                    value={metrics.psnr !== null ? `${metrics.psnr} dB` : '∞'}
+                    note={metrics.psnr === null ? 'No change applied' : metrics.psnr >= 40 ? 'Excellent quality' : metrics.psnr >= 30 ? 'Good quality' : 'Moderate change'}
+                    color="amber"
                 />
             </div>
         </div>
     );
 }
 
-function MetricCard({ title, icon, before, after, improvement, color }) {
+function MetricCard({ title, subtitle, icon, before, after, improvement, color }) {
     const isPositive = parseFloat(improvement) >= 0;
-    const colorClasses = {
-        blue: "bg-blue-50 border-blue-100 text-blue-700",
-        purple: "bg-purple-50 border-purple-100 text-purple-700"
+    const colorMap = {
+        blue: "bg-blue-50    border-blue-100    text-blue-700",
+        purple: "bg-purple-50  border-purple-100  text-purple-700",
+        emerald: "bg-emerald-50 border-emerald-100 text-emerald-700",
     };
 
     return (
-        <div className={`rounded-xl border p-5 ${colorClasses[color]}`}>
-            <div className="flex items-center gap-2 mb-4 font-medium">
-                {icon} {title}
-            </div>
+        <div className={`rounded-xl border p-5 ${colorMap[color]}`}>
+            <div className="flex items-center gap-2 mb-1 font-medium">{icon} {title}</div>
+            <div className="text-xs opacity-60 mb-4">{subtitle}</div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <div className="text-xs uppercase tracking-wider opacity-70 mb-1">Before</div>
@@ -63,12 +87,28 @@ function MetricCard({ title, icon, before, after, improvement, color }) {
                     <div className="text-xl font-semibold">{after}</div>
                 </div>
             </div>
-
             <div className="mt-4 pt-4 border-t border-black/5 flex items-center justify-between">
                 <div className="text-sm font-medium opacity-80">Improvement</div>
-                <div className={`text-sm font-bold ${isPositive ? 'text-green-600' : 'text-slate-600'}`}>
+                <div className={`text-sm font-bold ${isPositive ? 'text-green-600' : 'text-slate-500'}`}>
                     {isPositive ? '+' : ''}{improvement}%
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function SingleValueCard({ title, subtitle, icon, value, note, color }) {
+    const colorMap = {
+        amber: "bg-amber-50 border-amber-100 text-amber-700",
+    };
+
+    return (
+        <div className={`rounded-xl border p-5 ${colorMap[color]}`}>
+            <div className="flex items-center gap-2 mb-1 font-medium">{icon} {title}</div>
+            <div className="text-xs opacity-60 mb-4">{subtitle}</div>
+            <div className="text-3xl font-bold mb-2">{value}</div>
+            <div className="mt-4 pt-4 border-t border-black/5">
+                <p className="text-xs font-medium opacity-70">{note}</p>
             </div>
         </div>
     );
