@@ -112,7 +112,7 @@ export default function Upload({ onUpload }) {
     };
 
     return (
-        <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-left">
+        <div className="w-full bg-[var(--bg-card)] rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden text-left">
             {!cropFile ? (
                 <div className="p-8">
                     <h2 className="text-2xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
@@ -160,8 +160,8 @@ export default function Upload({ onUpload }) {
                                 key={p.label}
                                 onClick={() => handleAspectChange(p)}
                                 className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-colors ${aspectPreset.label === p.label
-                                        ? 'bg-indigo-600 text-white border-indigo-600'
-                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'
                                     }`}
                             >{p.label}</button>
                         ))}

@@ -11,8 +11,8 @@ export default function Metrics({ metrics }) {
     const snrImpr = pct(metrics.snr_before, metrics.snr_after);
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 ease-out">
-            <h2 className="text-2xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
+        <div className="bg-[var(--bg-card)] rounded-2xl shadow-sm border border-[var(--border)] p-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 ease-out">
+            <h2 className="text-2xl font-semibold text-[var(--text)] mb-6 flex items-center gap-2">
                 <Activity className="w-6 h-6 text-indigo-500" />
                 Image Metrics
             </h2>
@@ -68,28 +68,28 @@ export default function Metrics({ metrics }) {
 function MetricCard({ title, subtitle, icon, before, after, improvement, color }) {
     const isPositive = parseFloat(improvement) >= 0;
     const colorMap = {
-        blue: "bg-blue-50    border-blue-100    text-blue-700",
-        purple: "bg-purple-50  border-purple-100  text-purple-700",
-        emerald: "bg-emerald-50 border-emerald-100 text-emerald-700",
+        blue: "bg-[var(--bg-card)] border-[var(--border)]",
+        purple: "bg-[var(--bg-card)] border-[var(--border)]",
+        emerald: "bg-[var(--bg-card)] border-[var(--border)]",
     };
 
     return (
         <div className={`rounded-xl border p-5 ${colorMap[color]}`}>
-            <div className="flex items-center gap-2 mb-1 font-medium">{icon} {title}</div>
-            <div className="text-xs opacity-60 mb-4">{subtitle}</div>
+            <div className="flex items-center gap-2 mb-1 font-medium text-[var(--text)]">{icon} {title}</div>
+            <div className="text-xs text-[var(--text-muted)] mb-4">{subtitle}</div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <div className="text-xs uppercase tracking-wider opacity-70 mb-1">Before</div>
-                    <div className="text-xl font-semibold">{before}</div>
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">Before</div>
+                    <div className="text-xl font-semibold text-[var(--text)]">{before}</div>
                 </div>
                 <div>
-                    <div className="text-xs uppercase tracking-wider opacity-70 mb-1">After</div>
-                    <div className="text-xl font-semibold">{after}</div>
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">After</div>
+                    <div className="text-xl font-semibold text-[var(--text)]">{after}</div>
                 </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-black/5 flex items-center justify-between">
-                <div className="text-sm font-medium opacity-80">Improvement</div>
-                <div className={`text-sm font-bold ${isPositive ? 'text-green-600' : 'text-slate-500'}`}>
+            <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
+                <div className="text-sm font-medium text-[var(--text-muted)]">Improvement</div>
+                <div className={`text-sm font-bold ${isPositive ? 'text-green-500' : 'text-slate-500'}`}>
                     {isPositive ? '+' : ''}{improvement}%
                 </div>
             </div>
@@ -99,16 +99,16 @@ function MetricCard({ title, subtitle, icon, before, after, improvement, color }
 
 function SingleValueCard({ title, subtitle, icon, value, note, color }) {
     const colorMap = {
-        amber: "bg-amber-50 border-amber-100 text-amber-700",
+        amber: "bg-[var(--bg-card)] border-[var(--border)]",
     };
 
     return (
         <div className={`rounded-xl border p-5 ${colorMap[color]}`}>
-            <div className="flex items-center gap-2 mb-1 font-medium">{icon} {title}</div>
-            <div className="text-xs opacity-60 mb-4">{subtitle}</div>
-            <div className="text-3xl font-bold mb-2">{value}</div>
-            <div className="mt-4 pt-4 border-t border-black/5">
-                <p className="text-xs font-medium opacity-70">{note}</p>
+            <div className="flex items-center gap-2 mb-1 font-medium text-[var(--text)]">{icon} {title}</div>
+            <div className="text-xs text-[var(--text-muted)] mb-4">{subtitle}</div>
+            <div className="text-3xl font-bold mb-2 text-[var(--text)]">{value}</div>
+            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                <p className="text-xs font-medium text-[var(--text-muted)]">{note}</p>
             </div>
         </div>
     );

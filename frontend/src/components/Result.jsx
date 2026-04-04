@@ -98,8 +98,8 @@ export default function Result({ originalImage, enhancedImage, analysis, tuning,
 
             {/* Right Column: Tuning Controls */}
             <div className="w-full xl:w-80 flex-shrink-0">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24 space-y-6">
-                    <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <div className="bg-[var(--bg-card)] rounded-2xl shadow-sm border border-[var(--border)] p-6 sticky top-24 space-y-6">
+                    <h3 className="font-semibold text-[var(--text)] flex items-center gap-2">
                         <Settings2 className="w-5 h-5 text-slate-500" /> Manual Tuning
                     </h3>
 
@@ -112,7 +112,7 @@ export default function Result({ originalImage, enhancedImage, analysis, tuning,
 
                     {/* Output Format */}
                     <div>
-                        <div className="text-sm font-medium text-slate-700 mb-2">Output Format</div>
+                        <div className="text-sm font-medium text-[var(--text)] mb-2">Output Format</div>
                         <div className="flex gap-2 mb-3">
                             {['png', 'jpeg', 'webp'].map(fmt => (
                                 <button
@@ -120,21 +120,21 @@ export default function Result({ originalImage, enhancedImage, analysis, tuning,
                                     onClick={() => onOutputChange({ format: fmt, quality: outputQuality })}
                                     className={`flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase border transition-colors ${outputFormat === fmt
                                         ? 'bg-indigo-600 text-white border-indigo-600'
-                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'
+                                        : 'bg-slate-50 dark:bg-slate-800 text-[var(--text-muted)] border-[var(--border)] hover:border-indigo-300'
                                         }`}
                                 >{fmt}</button>
                             ))}
                         </div>
                         {outputFormat !== 'png' && (
                             <div>
-                                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                                    <span>Quality</span><span className="font-mono text-indigo-600">{outputQuality}</span>
+                                <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1">
+                                    <span>Quality</span><span className="font-mono text-indigo-600 dark:text-indigo-400">{outputQuality}</span>
                                 </div>
                                 <input
                                     type="range" min={50} max={100} step={5}
                                     value={outputQuality}
                                     onChange={e => onOutputChange({ format: outputFormat, quality: parseInt(e.target.value) })}
-                                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-indigo-100 accent-indigo-600"
+                                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-slate-200 dark:bg-slate-700 accent-indigo-600 dark:accent-indigo-500"
                                 />
                             </div>
                         )}
