@@ -104,20 +104,60 @@ def calculate_metrics(original, enhanced):
     }
 
 
-def image_to_base64(image, fmt='png', quality=90):
-    """Encodes a BGR numpy array to a base64 data URI."""
+def encode_image(image, fmt='png', quality=90):
+    """
+    Encodes a BGR numpy array to bytes.
+    For PNG: uses Pillow with optimize=True for lossless size reduction.
+    For JPEG/WebP: uses OpenCV with given quality.
+    Returns (bytes, mime_type).
+    """
     if fmt == 'jpeg':
         encode_params = [cv2.IMWRITE_JPEG_QUALITY, quality]
         _, buffer = cv2.imencode('.jpg', image, encode_params)
-        mime = 'image/jpeg'
+        return buffer.tobytes(), 'image/jpeg'
     elif fmt == 'webp':
         encode_params = [cv2.IMWRITE_WEBP_QUALITY, quality]
         _, buffer = cv2.imencode('.webp', image, encode_params)
-        mime = 'image/webp'
+        return buffer.tobytes(), 'image/webp'
     else:
-        _, buffer = cv2.imencode('.png', image)
-        mime = 'image/png'
-    return f"data:{mime};base64,{base64.b64encode(buffer).decode('utf-8')}"
+        # PNG: use Pillow for lossless optimize
+        pil_img = PILImage.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        buf = io.BytesIO()
+        pil_img.save(buf, format='PNG', optimize=True, compress_level=6)
+        return buf.getvalue(), 'image/png'
+
+
+def compress_to_target(image, fmt, target_bytes):
+    """
+    Binary-searches the quality level to produce the smallest file
+    that is still <= target_bytes. Falls back to quality=5 if impossible.
+    Only applicable to JPEG and WebP (PNG is lossless).
+    Returns (image_bytes, actual_quality_used).
+    """
+    lo, hi = 5, 95
+    best_bytes = None
+    best_q = lo
+
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        img_bytes, _ = encode_image(image, fmt, quality=mid)
+        if len(img_bytes) <= target_bytes:
+            best_bytes = img_bytes
+            best_q = mid
+            lo = mid + 1  # try higher quality (bigger file still within budget)
+        else:
+            hi = mid - 1  # too large, try lower quality
+
+    if best_bytes is None:
+        # Even quality=5 is too large — return the smallest we can
+        best_bytes, _ = encode_image(image, fmt, quality=5)
+        best_q = 5
+
+    return best_bytes, best_q
+
+
+def image_to_base64(image_bytes, mime):
+    return f"data:{mime};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
 
 
 # ── Adaptive Pipeline ────────────────────────────────────────────────────────
@@ -196,10 +236,11 @@ def process_image():
 
     # — Read & EXIF rotate —
     file_bytes = file.read()
+    original_size_bytes = len(file_bytes)
+
     try:
         image = auto_rotate_exif(file_bytes)
     except Exception:
-        # Fallback: raw OpenCV decode
         arr = np.frombuffer(file_bytes, np.uint8)
         image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
@@ -214,6 +255,9 @@ def process_image():
     output_format      = request.form.get('format', 'png').lower()   # png | jpeg | webp
     output_quality     = int(request.form.get('quality', 90))
 
+    # — Target file size (optional, KB; 0 = disabled) —
+    target_size_kb     = int(request.form.get('target_size_kb', 0))
+
     # — Analysis —
     is_blurred, blur_variance, blur_threshold = detect_blur(image)
     noise_type, noise_variance               = detect_noise(image)
@@ -222,7 +266,7 @@ def process_image():
     analysis = {
         "blur":       bool(is_blurred),
         "noise_type": noise_type,
-        "brightness": brightness_level,       # "low" | "normal" | "high"
+        "brightness": brightness_level,
     }
 
     # — Adaptive Enhancement —
@@ -231,14 +275,30 @@ def process_image():
         sharpness_strength, noise_strength, color_strength, contrast_strength
     )
 
+    # — Encode output —
+    actual_quality = output_quality
+    if target_size_kb > 0 and output_format in ('jpeg', 'webp'):
+        # Target size mode: binary-search quality
+        target_bytes = target_size_kb * 1024
+        enhanced_bytes, actual_quality = compress_to_target(enhanced, output_format, target_bytes)
+        mime = 'image/jpeg' if output_format == 'jpeg' else 'image/webp'
+    else:
+        enhanced_bytes, mime = encode_image(enhanced, fmt=output_format, quality=output_quality)
+
+    enhanced_size_bytes = len(enhanced_bytes)
+
     # — Metrics —
     metrics = calculate_metrics(image, enhanced)
+    metrics['original_size_kb']  = round(original_size_bytes / 1024, 1)
+    metrics['enhanced_size_kb']  = round(enhanced_size_bytes / 1024, 1)
+    metrics['compression_ratio'] = round(original_size_bytes / enhanced_size_bytes, 2) if enhanced_size_bytes > 0 else 1.0
 
     return jsonify({
-        "enhanced_image": image_to_base64(enhanced, fmt=output_format, quality=output_quality),
-        "analysis":       analysis,
-        "metrics":        metrics,
-        "applied_tuning": applied_tuning,
+        "enhanced_image":  image_to_base64(enhanced_bytes, mime),
+        "analysis":        analysis,
+        "metrics":         metrics,
+        "applied_tuning":  applied_tuning,
+        "actual_quality":  actual_quality,
     })
 
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Contrast, Layers, Radio, Signal } from 'lucide-react';
+import { Activity, Contrast, Layers, Radio, Signal, FileArchive } from 'lucide-react';
 
 export default function Metrics({ metrics }) {
 
@@ -10,6 +10,15 @@ export default function Metrics({ metrics }) {
 
     const snrImpr = pct(metrics.snr_before, metrics.snr_after);
 
+    // File size data (may not exist on first render before compression update)
+    const hasFileSizeData = metrics.original_size_kb != null;
+    const savedKb = hasFileSizeData
+        ? (metrics.original_size_kb - metrics.enhanced_size_kb).toFixed(1)
+        : null;
+    const savedPct = hasFileSizeData
+        ? (((metrics.original_size_kb - metrics.enhanced_size_kb) / metrics.original_size_kb) * 100).toFixed(1)
+        : null;
+
     return (
         <div className="bg-[var(--bg-card)] rounded-2xl shadow-sm border border-[var(--border)] p-8 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 ease-out">
             <h2 className="text-2xl font-semibold text-[var(--text)] mb-6 flex items-center gap-2">
@@ -17,7 +26,7 @@ export default function Metrics({ metrics }) {
                 Image Metrics
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
                 {/* Sharpness */}
                 <MetricCard
                     title="Sharpness"
@@ -60,6 +69,34 @@ export default function Metrics({ metrics }) {
                     note={metrics.psnr === null ? 'No change applied' : metrics.psnr >= 40 ? 'Excellent quality' : metrics.psnr >= 30 ? 'Good quality' : 'Moderate change'}
                     color="amber"
                 />
+
+                {/* File Size */}
+                {hasFileSizeData && (
+                    <div className="rounded-xl border p-5 bg-[var(--bg-card)] border-[var(--border)]">
+                        <div className="flex items-center gap-2 mb-1 font-medium text-[var(--text)]">
+                            <FileArchive className="w-5 h-5 text-rose-500" /> File Size
+                        </div>
+                        <div className="text-xs text-[var(--text-muted)] mb-4">Compressed output</div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">Original</div>
+                                <div className="text-xl font-semibold text-[var(--text)]">{metrics.original_size_kb} KB</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">Output</div>
+                                <div className="text-xl font-semibold text-[var(--text)]">{metrics.enhanced_size_kb} KB</div>
+                            </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
+                            <div className="text-sm font-medium text-[var(--text-muted)]">
+                                {metrics.compression_ratio}× smaller
+                            </div>
+                            <div className={`text-sm font-bold ${parseFloat(savedPct) > 0 ? 'text-green-500' : 'text-slate-400'}`}>
+                                {parseFloat(savedPct) > 0 ? `-${savedPct}%` : `+${Math.abs(savedPct)}%`}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

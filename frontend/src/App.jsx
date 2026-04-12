@@ -41,6 +41,7 @@ function App() {
     const [tuning, setTuning] = useState({ sharpness: -1, noise: -1, color: -1, contrast: -1 });
     const [outputFormat, setOutputFormat] = useState('png');
     const [outputQuality, setOutputQuality] = useState(90);
+    const [targetSizeKb, setTargetSizeKb] = useState(0);
 
     // ── Dark mode ──
     useEffect(() => {
@@ -114,7 +115,7 @@ function App() {
         const timers = steps.map(({ delay, msg }) => setTimeout(() => setPipelineStep(msg), delay));
 
         try {
-            const data = await processImage(file, currentTuning, outputFormat, outputQuality);
+            const data = await processImage(file, currentTuning, outputFormat, outputQuality, targetSizeKb);
             setImages(prev => prev.map(img => img.id === id ? { ...img, status: 'completed', result: data } : img));
         } catch (err) {
             setError(err.response?.data?.error || 'Error processing image.');
@@ -132,9 +133,10 @@ function App() {
         if (active) processSingleImage(active.id, active.originalFile, newTuning);
     };
 
-    const handleOutputChange = ({ format, quality }) => {
+    const handleOutputChange = ({ format, quality, targetSizeKb: tsz }) => {
         setOutputFormat(format);
         setOutputQuality(quality);
+        if (tsz !== undefined) setTargetSizeKb(tsz);
     };
 
     const handleRetry = (img) => {
@@ -145,7 +147,7 @@ function App() {
     const handleReset = () => {
         setImages([]); setActiveImageId(null); setError(null);
         setTuning({ sharpness: -1, noise: -1, color: -1, contrast: -1 });
-        setOutputFormat('png'); setOutputQuality(90);
+        setOutputFormat('png'); setOutputQuality(90); setTargetSizeKb(0);
     };
 
     // ── Download All as ZIP ──
@@ -325,7 +327,9 @@ function App() {
                                             onApplyTuning={handleApplyTuning}
                                             outputFormat={outputFormat}
                                             outputQuality={outputQuality}
+                                            targetSizeKb={targetSizeKb}
                                             onOutputChange={handleOutputChange}
+                                            actualQuality={activeImage.result.actual_quality}
                                         />
                                     </ErrorBoundary>
                                     <ErrorBoundary>

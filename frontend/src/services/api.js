@@ -13,12 +13,14 @@ const api = axios.create({
  * @param {object} tuningParams   - { sharpness, noise, color, contrast }
  * @param {string} outputFormat   - 'png' | 'jpeg' | 'webp'
  * @param {number} outputQuality  - 0–100 (used for jpeg / webp)
+ * @param {number} targetSizeKb   - 0 = disabled; >0 = target file size in KB
  */
-export const processImage = async (imageFile, tuningParams = {}, outputFormat = 'png', outputQuality = 90) => {
+export const processImage = async (imageFile, tuningParams = {}, outputFormat = 'png', outputQuality = 90, targetSizeKb = 0) => {
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('format', outputFormat);
     formData.append('quality', outputQuality);
+    formData.append('target_size_kb', targetSizeKb);
 
     Object.keys(tuningParams).forEach(key => {
         formData.append(key, tuningParams[key]);
@@ -34,3 +36,4 @@ export const processImage = async (imageFile, tuningParams = {}, outputFormat = 
         throw error;
     }
 };
+
